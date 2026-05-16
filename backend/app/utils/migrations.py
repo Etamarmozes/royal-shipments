@@ -1,9 +1,13 @@
-"""Lightweight schema migrations for SQLite — runs at startup.
+"""Lightweight schema migrations — runs at startup.
 
-For an MVP using SQLite, full Alembic is overkill. Instead, we inspect
-each table at startup and add any columns that exist on the SQLAlchemy
-model but not yet in the database. Drops are NOT supported (intentional —
-losing data silently is worse than a slightly-stale schema).
+For an MVP this is a smaller alternative to full Alembic.  It inspects
+each table at startup and adds any column that exists on the SQLAlchemy
+model but not yet in the database.  Drops are NOT supported (intentional
+— losing data silently is worse than a slightly-stale schema).
+
+Supports both SQLite (dev) and PostgreSQL (prod).  Dialect detected from
+the engine at runtime.  For destructive / non-additive schema changes,
+use Alembic — this runner only handles `ALTER TABLE ADD COLUMN`.
 """
 from __future__ import annotations
 
@@ -16,34 +20,53 @@ from ..database import Base
 log = logging.getLogger("migrations")
 
 
-# Map SQLAlchemy column types → SQLite column type literal
-_TYPE_MAP = {
+# ----- type maps per dialect -----
+# SQLite is loosely typed — most things go to TEXT/INTEGER.
+_SQLITE_TYPE_MAP = {
     "INTEGER": "INTEGER",
     "VARCHAR": "TEXT",
-    "TEXT": "TEXT",
-    "FLOAT": "REAL",
+    "TEXT":    "TEXT",
+    "FLOAT":   "REAL",
     "BOOLEAN": "INTEGER",
     "DATETIME": "TEXT",
-    "DATE": "TEXT",
-    "JSON": "TEXT",
+    "DATE":    "TEXT",
+    "JSON":    "TEXT",
+}
+
+# PostgreSQL has proper types.  We map SQLAlchemy column-type class names
+# directly to the native Postgres types.
+_PG_TYPE_MAP = {
+    "INTEGER":  "INTEGER",
+    "VARCHAR":  "VARCHAR",
+    "TEXT":     "TEXT",
+    "FLOAT":    "DOUBLE PRECISION",
+    "BOOLEAN":  "BOOLEAN",
+    "DATETIME": "TIMESTAMP",
+    "DATE":     "DATE",
+    "JSON":     "JSONB",
 }
 
 
-def _sqlite_type(col_type) -> str:
+def _column_type_sql(col_type, dialect_name: str) -> str:
     name = type(col_type).__name__.upper()
-    return _TYPE_MAP.get(name, "TEXT")
+    if dialect_name == "postgresql":
+        return _PG_TYPE_MAP.get(name, "TEXT")
+    return _SQLITE_TYPE_MAP.get(name, "TEXT")
 
 
-def _column_default_sql(col) -> str:
+def _column_default_sql(col, dialect_name: str) -> str:
     """Render the Python-side default as a SQL DEFAULT clause (best-effort).
     Without this, ALTER TABLE ADD COLUMN leaves all existing rows NULL —
-    which silently breaks `WHERE col == False` filters in SQLAlchemy."""
+    which silently breaks `WHERE col == False` filters in SQLAlchemy.
+    """
     d = col.default
     if d is None:
         return ""
     if d.is_scalar:
         v = d.arg
         if isinstance(v, bool):
+            if dialect_name == "postgresql":
+                return f" DEFAULT {'TRUE' if v else 'FALSE'}"
             return f" DEFAULT {1 if v else 0}"
         if isinstance(v, int):
             return f" DEFAULT {int(v)}"
@@ -56,6 +79,15 @@ def _column_default_sql(col) -> str:
 
 
 def add_missing_columns(engine: Engine) -> None:
+    dialect_name = engine.dialect.name   # "sqlite" / "postgresql" / …
+    if dialect_name not in ("sqlite", "postgresql"):
+        log.warning(
+            "add_missing_columns: dialect=%s not supported, skipping. "
+            "Use Alembic for managed migrations.",
+            dialect_name,
+        )
+        return
+
     insp = inspect(engine)
     existing_tables = set(insp.get_table_names())
     for table_name, table in Base.metadata.tables.items():
@@ -67,22 +99,23 @@ def add_missing_columns(engine: Engine) -> None:
         for col in table.columns:
             if col.name in existing_cols:
                 continue
-            sqlite_type = _sqlite_type(col.type)
-            default_sql = _column_default_sql(col)
-            ddl = f'ALTER TABLE "{table_name}" ADD COLUMN "{col.name}" {sqlite_type}{default_sql}'
+            col_type = _column_type_sql(col.type, dialect_name)
+            default_sql = _column_default_sql(col, dialect_name)
+            # Both SQLite and Postgres accept double-quoted identifiers.
+            ddl = f'ALTER TABLE "{table_name}" ADD COLUMN "{col.name}" {col_type}{default_sql}'
             log.info("MIGRATE: %s", ddl)
             try:
                 with engine.begin() as conn:
                     conn.execute(text(ddl))
-                    # Backfill: ALTER ADD COLUMN with DEFAULT only sets new
-                    # rows; for SQLite ≥3.35 it backfills existing too, but
-                    # for older versions and to be safe, do it explicitly.
+                    # Backfill existing rows so the column never reads NULL
+                    # against a Python default of False / 0 / "" .  Postgres
+                    # already does this for ADD COLUMN ... DEFAULT, but SQLite
+                    # only does it on 3.35+ — do it explicitly to be safe.
                     if default_sql:
-                        backfill = f'UPDATE "{table_name}" SET "{col.name}" = (SELECT "{col.name}" FROM "{table_name}" WHERE "{col.name}" IS NOT NULL LIMIT 1) WHERE "{col.name}" IS NULL'
-                        # Simpler: re-run with literal default
+                        default_literal = default_sql.replace(" DEFAULT ", "")
                         conn.execute(text(
                             f'UPDATE "{table_name}" SET "{col.name}" = '
-                            + default_sql.replace(" DEFAULT ", "")
+                            + default_literal
                             + f' WHERE "{col.name}" IS NULL'
                         ))
             except Exception as e:

@@ -231,7 +231,9 @@
       "Bash(winget install *)",
       "Bash(command -v ssh)",
       "Bash(ssh -V)",
-      "Bash(curl -s -v https://15a0a6ab48789c.lhr.life --max-time 10)"
+      "Bash(curl -s -v https://15a0a6ab48789c.lhr.life --max-time 10)",
+      "Bash(awk '{print $5\"\\\\t\"$NF}')",
+      "Bash(curl -s -o /dev/null -w \"backend /health: %{http_code}\\\\n\" http://localhost:8000/health --max-time 5)"
     ]
   }
 }

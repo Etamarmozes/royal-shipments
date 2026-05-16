@@ -1,0 +1,181 @@
+# ============================================================================
+# Royal Linen Shipments — production stack
+# ----------------------------------------------------------------------------
+# Three services on an internal bridge network:
+#
+#   db        PostgreSQL 16  (data on `db_data` named volume)
+#   backend   FastAPI/Uvicorn — depends on db being healthy
+#   frontend  nginx serving the React SPA + proxying /api → backend
+#
+# The frontend container exposes 127.0.0.1:8080 on the host.  The host's
+# nginx (see deploy/nginx/*.conf) terminates TLS for both subdomains and
+# forwards plain HTTP into the container network:
+#
+#   app.royallinenshipments.com  →  127.0.0.1:8080 (frontend)
+#   api.royallinenshipments.com  →  127.0.0.1:8000 (backend, optional —
+#                                                   the SPA reaches it via
+#                                                   the in-container /api proxy)
+#
+# Persistent data:
+#   db_data            ← Postgres data dir
+#   backend_uploads    ← document files
+#   backend_data       ← (optional) state cache + state/last_email_sync.txt
+#   backend_logs       ← app log files
+#
+# Secrets live in `.env` (see deploy/.env.example).  Never commit `.env`.
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # PostgreSQL
+  # --------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: royal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB:       ${POSTGRES_DB:?set POSTGRES_DB in .env}
+      # Make pg_dump / psql friendlier inside the container
+      PGUSER:            ${POSTGRES_USER}
+      TZ:                Asia/Jerusalem
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Mount Postgres config tweaks (optional — file is created if you want).
+      # - ./deploy/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    # Postgres listens only on the docker-compose network — never expose to
+    # the public internet.  Uncomment for ad-hoc debugging from the host:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -q"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - royal-net
+
+  # --------------------------------------------------------------------------
+  # FastAPI backend
+  # --------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: royal-linen/backend:latest
+    container_name: royal-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # --- database ---
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+      # --- auth ---
+      AUTH_SECRET:              ${AUTH_SECRET:?set AUTH_SECRET in .env (long random string)}
+      AUTH_TOKEN_TTL_HOURS:     ${AUTH_TOKEN_TTL_HOURS:-24}
+      AUTH_BOOTSTRAP_USERNAME:  ${AUTH_BOOTSTRAP_USERNAME:-admin}
+      AUTH_BOOTSTRAP_PASSWORD:  ${AUTH_BOOTSTRAP_PASSWORD:-changeme}
+      EMERGENCY_ADMIN_USERNAME: ${EMERGENCY_ADMIN_USERNAME:-}
+      EMERGENCY_ADMIN_PASSWORD: ${EMERGENCY_ADMIN_PASSWORD:-}
+
+      # --- public URLs ---
+      FRONTEND_URL:        https://${FRONTEND_HOST:-app.royallinenshipments.com}
+      BACKEND_URL:         https://${BACKEND_HOST:-api.royallinenshipments.com}
+      CORS_ALLOWED_ORIGINS: https://${FRONTEND_HOST:-app.royallinenshipments.com}
+
+      # --- file storage (volume below) ---
+      FILE_STORAGE_PATH:   /app/uploads
+
+      # --- email / Gmail (disabled until OAuth is configured for prod domain) ---
+      GMAIL_DISABLED:        ${GMAIL_DISABLED:-true}
+      GMAIL_REDIRECT_URI:    ${GMAIL_REDIRECT_URI:-}
+      GMAIL_SYNC_DAYS:       ${GMAIL_SYNC_DAYS:-7}
+      GMAIL_SYNC_MAX_MESSAGES: ${GMAIL_SYNC_MAX_MESSAGES:-100}
+      GMAIL_PREFER_UNREAD:   ${GMAIL_PREFER_UNREAD:-false}
+
+      # --- background scan cadence ---
+      EMAIL_SYNC_INTERVAL_MINUTES: ${EMAIL_SYNC_INTERVAL_MINUTES:-60}
+
+      # --- uvicorn ---
+      BACKEND_WORKERS: ${BACKEND_WORKERS:-2}
+      TZ: Asia/Jerusalem
+
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_data:/app/data
+      - backend_logs:/app/logs
+      # If/when you reconnect Gmail, mount a host file with the OAuth client
+      # secrets here (or use docker secrets).  Read-only.
+      # - ./deploy/secrets/gmail_credentials.json:/app/credentials.json:ro
+    expose:
+      - "8000"
+    # Bind only to localhost on the host so the public internet can NEVER
+    # talk to the backend directly — only via the host nginx reverse proxy
+    # at api.royallinenshipments.com.
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "4", "http://127.0.0.1:8000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - royal-net
+
+  # --------------------------------------------------------------------------
+  # React SPA (served by nginx, /api proxied to backend)
+  # --------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # The SPA always calls a relative /api/... — this is just here for
+        # completeness in case you ever build with a different base.
+        VITE_API_BASE: /api
+    image: royal-linen/frontend:latest
+    container_name: royal-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Jerusalem
+    # Bind only to localhost — the host nginx is what's reachable from
+    # the public internet on app.royallinenshipments.com.
+    ports:
+      - "127.0.0.1:8080:80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/"]
+      interval: 20s
+      timeout: 4s
+      retries: 5
+      start_period: 10s
+    networks:
+      - royal-net
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  db_data:
+    name: royal_db_data
+  backend_uploads:
+    name: royal_backend_uploads
+  backend_data:
+    name: royal_backend_data
+  backend_logs:
+    name: royal_backend_logs
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  royal-net:
+    name: royal-net
+    driver: bridge

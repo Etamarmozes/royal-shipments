@@ -1,0 +1,33 @@
+# Keep the build context tiny — npm ci inside the container recreates
+# node_modules from the lockfile.
+
+node_modules/
+dist/
+.vite/
+build/
+
+# Local env / secrets
+.env
+.env.*
+
+# Tests + IDE
+coverage/
+.nyc_output/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+README.md
+*.md
+.git
+.gitignore
+.gitattributes
+
+# Backend artifacts (we're inside frontend/)
+backend/

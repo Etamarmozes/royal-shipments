@@ -1,0 +1,59 @@
+# Keep the build context small — speeds up `docker build` and prevents
+# leaking local dev artifacts into the production image.
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local virtualenvs / IDEs
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local DB + uploads + logs (these get fresh volumes in production)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/backups/
+data/state/
+uploads/
+exports/
+logs/
+
+# Secrets / OAuth tokens — NEVER bake into the image
+credentials.json
+.env
+.env.*
+gmail_token.json
+*.pem
+
+# Tests & dev-only scripts
+tests/
+test_*.py
+*_test.py
+
+# Docs / VCS
+README.md
+GMAIL_SETUP.md
+*.md
+.git
+.gitignore
+.gitattributes
+
+# Frontend artifacts (we copy the app dir explicitly)
+frontend/
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
