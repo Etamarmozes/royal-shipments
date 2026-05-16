@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: "Heebo", "Rubik", Arial, sans-serif;
+  direction: rtl;
+  /* Honor iOS safe areas (notch / home indicator) when running as PWA */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Slightly larger tap targets on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  button, a {
+    min-height: 40px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-slate-200 p-4;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-600;
+  }
+  .btn-secondary {
+    @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200;
+  }
+  .btn-danger {
+    @apply btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200;
+  }
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
+  }
+  .badge-gray { @apply badge bg-slate-100 text-slate-700; }
+  .badge-blue { @apply badge bg-blue-50 text-blue-700; }
+  .badge-green { @apply badge bg-emerald-50 text-emerald-700; }
+  .badge-amber { @apply badge bg-amber-50 text-amber-800; }
+  .badge-red { @apply badge bg-red-50 text-red-700; }
+  .badge-purple { @apply badge bg-purple-50 text-purple-700; }
+
+  .input {
+    @apply block w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none;
+    /* iOS bumps font to 16px to avoid auto-zoom on focus */
+    font-size: 16px;
+  }
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1;
+  }
+
+  /* Mobile-only: when bottom nav is visible, push body content up to clear it */
+  .with-bottom-nav-padding {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* ----- Tabular numerics: aligns columns of numbers/dates so they don't
+     wobble row-to-row.  Apply via class="num" on td/span containing numbers. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* ----- Excel-density tables.  Use class="table-dense" on a <table>
+     to opt-in.  Reduces padding and tightens line-height so Adi/Shani
+     see more rows on a 24" monitor without losing readability. */
+  .table-dense thead th {
+    @apply text-[11px] uppercase tracking-wider text-slate-500 font-semibold py-1.5 px-2 bg-slate-50 border-b border-slate-200;
+  }
+  .table-dense tbody td {
+    @apply py-1.5 px-2 text-[13px] leading-snug text-slate-800 border-b border-slate-100;
+  }
+  .table-dense tbody tr:hover td {
+    @apply bg-slate-50;
+  }
+  .table-dense tbody td.num,
+  .table-dense thead th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ----- RTL polish:  English code-strings (BL, container#, JOB-id) are
+     LTR by nature.  Wrapping them in class="ltr-token" forces left-to-right
+     and uses a mono font so a long Hebrew sentence with an embedded BL
+     number doesn't get re-shuffled by the bidi algorithm. */
+  .ltr-token {
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 0.92em;
+  }
+
+  /* ----- Truncate cells gracefully.  Apply class="cell-truncate" on td. */
+  .cell-truncate {
+    @apply max-w-[200px] truncate;
+  }
+}

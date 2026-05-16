@@ -1,0 +1,54 @@
+{
+  "name": "Royal Linen Shipments",
+  "short_name": "Royal Linen",
+  "description": "מרכז שליטה משלוחים — Royal Linen Ltd",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#2563eb",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "logistics"],
+  "shortcuts": [
+    {
+      "name": "מכולות בדרך",
+      "short_name": "מכולות",
+      "url": "/containers-in-transit",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "קבלת סחורה",
+      "short_name": "קבלה",
+      "url": "/receiving",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "מסמכים",
+      "short_name": "מסמכים",
+      "url": "/documents",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

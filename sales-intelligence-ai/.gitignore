@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Env / secrets
+.env
+*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/*.log
+
+# Generated artifacts (keep folders, ignore contents)
+reports/jpg/*
+reports/png/*
+reports/pdf/*
+exports/*
+!reports/jpg/.gitkeep
+!reports/png/.gitkeep
+!reports/pdf/.gitkeep
+!exports/.gitkeep
+
+# Imported data files (keep folders only)
+data/imported/*
+data/failed/*
+data/archive/*
+data/comax_reports/*
+!data/imported/.gitkeep
+!data/failed/.gitkeep
+!data/archive/.gitkeep
+!data/comax_reports/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

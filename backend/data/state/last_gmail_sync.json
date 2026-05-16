@@ -1,0 +1,1 @@
+{"ok": true, "message": "19 new emails inserted (0 already in DB)", "query": "newer_than:7d -in:spam -in:trash", "days": 7, "unread_only": false, "matched": 19, "inserted": 19, "skipped_existing": 0, "errors": [], "started_at": "2026-05-03T17:20:18.305581", "synced_at": "2026-05-03T17:20:35.564520", "duration_ms": 17258}

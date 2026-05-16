@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Royal Linen — לא מחובר</title>
+    <link rel="icon" href="/icons/favicon-64.png" />
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Heebo", "Rubik", Arial, sans-serif;
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        color: #0f172a;
+      }
+      .card {
+        background: #fff;
+        border-radius: 1rem;
+        padding: 2rem 1.5rem;
+        max-width: 24rem;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+      .icon { font-size: 3rem; margin-bottom: 0.75rem; }
+      h1 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+      p { margin: 0 0 1.25rem; color: #64748b; font-size: 0.95rem; line-height: 1.5; }
+      button {
+        background: #2563eb;
+        color: #fff;
+        border: 0;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 100%;
+      }
+      button:hover { background: #1d4ed8; }
+      .hint { font-size: 0.8rem; color: #94a3b8; margin-top: 1rem; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon">📡</div>
+      <h1>אין חיבור לרשת</h1>
+      <p>
+        Royal Linen דורש חיבור לרשת כדי להציג נתונים עדכניים. בדוק את ה-Wi-Fi או את חיבור הסלולר ונסה שוב.
+      </p>
+      <button onclick="location.reload()">נסה שוב</button>
+      <div class="hint">ניתן להמשיך לצפות בדפים ששמורים במכשיר.</div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+תאריך,קוד סניף,שם סניף,קוד פריט,ברקוד,שם פריט,מותג,קטגוריה,כמות,מכר ברוטו,מכר נטו,הנחה
+2026-05-01,ST01,Kiryat Ono,AD-001,7290022220011,Adidas Stan Smith White M42,Adidas,Sneakers,4,1796,1796,0
+2026-05-01,ST01,Kiryat Ono,AD-003,7290022220035,Adidas Samba OG Black,Adidas,Sneakers,3,1647,1647,0
+2026-05-01,ST01,Kiryat Ono,KD-001,7290011110011,Keds Champion Classic White W37,Keds,Sneakers,1,249,249,0
+2026-05-01,ST03,Beit Shemesh,KD-001,7290011110011,Keds Champion Classic White W37,Keds,Sneakers,7,1743,1494,249
+2026-05-01,ST03,Beit Shemesh,KD-002,7290011110028,Keds Champion Classic Black W38,Keds,Sneakers,5,1245,1245,0
+2026-05-01,ST03,Beit Shemesh,AD-001,7290022220011,Adidas Stan Smith White M42,Adidas,Sneakers,1,449,449,0
+2026-05-02,ST01,Kiryat Ono,AD-001,7290022220011,Adidas Stan Smith White M42,Adidas,Sneakers,5,2245,2245,0
+2026-05-02,ST05,Ashdod,KD-003,7290011110035,Keds Triple Kick W36,Keds,Sneakers,6,1674,1674,0
+2026-05-02,ST06,Kiryat Yam,KD-004,7290011110042,Keds Kickstart Canvas Navy,Keds,Sneakers,8,1832,1832,0
+2026-05-02,ST06,Kiryat Yam,LT-002,7290044440028,Lifetime Tumbler 600ml Steel,Lifetime,Outdoor,12,1188,1188,0

@@ -1,0 +1,7 @@
+store_code,store_name,region,store_type,active
+ST01,Kiryat Ono,Center,flagship,true
+ST02,Bnei Brak,Center,general,true
+ST03,Beit Shemesh,Jerusalem,value,true
+ST04,Netanya,North,general,true
+ST05,Ashdod,South,value,true
+ST06,Kiryat Yam,North,outlet,true

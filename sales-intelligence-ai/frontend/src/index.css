@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+body {
+  font-family: 'Heebo', 'Inter', system-ui, sans-serif;
+}
+
+/* RTL-friendly subtle scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* Hebrew/English readability */
+.num {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  display: inline-block;
+}
